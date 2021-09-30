@@ -1,0 +1,15 @@
+services:
+  bot:
+    build: .
+    image: fiendsoftheelements/ffr-bot
+    environment:
+      REDIS_HOST: redis
+    links:
+      - redis
+  redis:
+    image: redis
+    command: redis-server --appendonly yes
+    volumes:
+      - ffrbot-data:/data
+volumes:
+  ffrbot-data: {}
