@@ -24,7 +24,8 @@ race_results = "race-results"
 self_assignable_roles =\
     ["duckling", "platypus", "race crew", "restreamer",
      "Ping Me To Race", "spectator", "guinea ping",
-     "He/Him", "She/Her", "They/Them", "IronGoler", "co-op flag tester"]
+     "He/Him", "She/Her", "They/Them",  "No Pronoun", "IronGoler",
+     "co-op flag tester"]
 self_assignable_roles_descriptions =\
     ["Optional new player role. Allows you to"
      + " participate in the weekly duckling "
@@ -65,6 +66,9 @@ self_assignable_roles_descriptions =\
      + " they/them instead of female or male"
      + " pronouns for you rather than just"
      + " assuming.",
+     "An optional role"
+     + " to let commentary people know to not"
+     + " use pronous for you.",
      "Grab this tag if you want to keep up"
      + "with all the IronGol events or if"
      + "you plan on participating in any"
