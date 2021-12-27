@@ -29,6 +29,8 @@ def allow_seed_rolling(ctx):
 def is_call_for_races(ctx):
     return ctx.channel.name == constants.call_for_races_channel
 
+def is_call_for_multiworld(ctx):
+    return ctx.channel.name == constants.call_for_races_channel
 
 def is_race_room(ctx):
     return ctx.channel.id in active_races.keys()
@@ -116,6 +118,43 @@ class Races(commands.Cog):
         active_races[racechannel.id] = race
         race.role = await ctx.guild.create_role(name=race.id,
                                                 reason="role for a race")
+        race.channel = racechannel
+        await racechannel.set_permissions(race.role, read_messages=True,
+                                          send_messages=True)
+        race.message = await ctx.channel.send(
+            "join this race with the following ?join command, @ any"
+            + " people that will be on your team if playing coop. "
+            + "Spectate the race with the following ?spectate command\n"
+            + "?join " + str(racechannel.id) + "\n"
+            + "?spectate " + str(racechannel.id))
+        aliases[racechannel.id] = dict()  # for team races
+        teamslist[racechannel.id] = dict()
+        race.owner = ctx.author.id
+
+    # Note: This will likely change to accommodate multiworld specific needs
+    @commands.command(aliases=['ap', 'multiworld', 'archipelago'])
+    @commands.check(is_call_for_multiworld())
+    @commands.check(allow_races)
+    async def startmultiworld(self, ctx, *, name=None):
+        if name is None:
+            await ctx.author.send("you forgot to name your race")
+            return
+        # overwrites = {
+        #     ctx.guild.default_role: discord.PermissionOverwrite(
+        #         read_messages=False), ctx.guild.me: discord
+        #     .PermissionOverwrite(
+        #         read_messages=True)}
+        racechannel = await ctx.guild \
+            .create_text_channel(name,
+                                 category=get(ctx.guild.categories,
+                                              name=constants.multiworld_category),
+                                 reason="bot generated channel for a multiworld,"
+                                        + " will be deleted after multiworld "
+                                          "finishes")
+        race = Race(racechannel.id, name)
+        active_races[racechannel.id] = race
+        race.role = await ctx.guild.create_role(name=race.id,
+                                                reason="role for a multiworld")
         race.channel = racechannel
         await racechannel.set_permissions(race.role, read_messages=True,
                                           send_messages=True)
@@ -288,7 +327,7 @@ class Races(commands.Cog):
         except KeyError:
             await ctx.channel.send("Key Error in 'undone' command")
 
-    @commands.command()
+    @commands.command(aliases=['ff'])
     @is_race_started()
     @is_runner()
     @commands.check(is_race_room)
