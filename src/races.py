@@ -22,15 +22,15 @@ allow_races_bool = True
 
 
 def allow_seed_rolling(ctx):
-    return (ctx.channel.name == constants.call_for_races_channel) or (
+    return (ctx.channel.name in constants.call_for_races_channels) or (
         ctx.channel.id in active_races.keys())
 
 
 def is_call_for_races(ctx):
-    return ctx.channel.name == constants.call_for_races_channel
+    return ctx.channel.name in constants.call_for_races_channels
 
 def is_call_for_multiworld(ctx):
-    return ctx.channel.name == constants.call_for_races_channel
+    return ctx.channel.name in constants.call_for_races_channels
 
 def is_race_room(ctx):
     return ctx.channel.id in active_races.keys()
@@ -133,7 +133,7 @@ class Races(commands.Cog):
 
     # Note: This will likely change to accommodate multiworld specific needs
     @commands.command(aliases=['ap', 'multiworld', 'archipelago'])
-    @commands.check(is_call_for_multiworld())
+    @commands.check(is_call_for_multiworld)
     @commands.check(allow_races)
     async def startmultiworld(self, ctx, *, name=None):
         if name is None:
@@ -301,7 +301,7 @@ class Races(commands.Cog):
         msg = race.getUpdate()
         await ctx.channel.send(msg)
 
-    @commands.command()
+    @commands.command(aliases=['d'])
     @is_race_started()
     @is_runner()
     @commands.check(is_race_room)
