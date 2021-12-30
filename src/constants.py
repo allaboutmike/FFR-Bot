@@ -34,6 +34,7 @@ self_assignable_roles =\
      "He/Him",
      "She/Her",
      "They/Them",
+     "No Pronoun"
      "IronGoler",
      "co-op flag tester",
      "APPingMeToPlay"
@@ -78,6 +79,9 @@ self_assignable_roles_descriptions =\
      + " they/them instead of female or male"
      + " pronouns for you rather than just"
      + " assuming.",
+     "An optional role"
+     + " to let commentary people know to not"
+     + " use pronouns for you.",
      "Grab this tag if you want to keep up"
      + "with all the IronGol events or if"
      + "you plan on participating in any"
