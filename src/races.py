@@ -137,13 +137,9 @@ class Races(commands.Cog):
     @commands.check(allow_races)
     async def startmultiworld(self, ctx, *, name=None):
         if name is None:
-            await ctx.author.send("you forgot to name your race")
+            await ctx.author.send("you forgot to name your multiworld")
             return
-        # overwrites = {
-        #     ctx.guild.default_role: discord.PermissionOverwrite(
-        #         read_messages=False), ctx.guild.me: discord
-        #     .PermissionOverwrite(
-        #         read_messages=True)}
+
         racechannel = await ctx.guild \
             .create_text_channel(name,
                                  category=get(ctx.guild.categories,
@@ -301,7 +297,7 @@ class Races(commands.Cog):
         msg = race.getUpdate()
         await ctx.channel.send(msg)
 
-    @commands.command(aliases=['d'])
+    @commands.command()
     @is_race_started()
     @is_runner()
     @commands.check(is_race_room)
@@ -327,7 +323,7 @@ class Races(commands.Cog):
         except KeyError:
             await ctx.channel.send("Key Error in 'undone' command")
 
-    @commands.command(aliases=['ff'])
+    @commands.command()
     @is_race_started()
     @is_runner()
     @commands.check(is_race_room)
