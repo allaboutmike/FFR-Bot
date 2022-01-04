@@ -7,6 +7,7 @@ import urllib.request
 import json
 from io import StringIO
 
+from discord import DiscordException
 from discord.ext import commands
 from discord.utils import get
 
@@ -175,7 +176,12 @@ class Races(commands.Cog):
     @commands.command(aliases=["enter"])
     @commands.check(allow_seed_rolling)
     async def join(self, ctx, id=None, name=None):
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except DiscordException:
+            # Fails on newer discord tokens
+            pass
+
         if id is None:
             id = ctx.channel.id
         id = int(id)
