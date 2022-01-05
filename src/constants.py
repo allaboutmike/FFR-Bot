@@ -18,14 +18,27 @@ asyncchannel = "async-weekly"
 asyncleaderboard = "async-leaderboard"
 asyncspoiler = "async-spoilers"
 rolerequiredduckling = 'duckling'
-call_for_races_channel = "race-organization"
+call_for_races_channels = ["race-organization", "game-and-race-announcements"]
 races_category = "Race Administration"
+multiworld_category = "Archipelago"
 race_results = "race-results"
 self_assignable_roles =\
-    ["duckling", "platypus", "race crew", "restreamer",
-     "Ping Me To Race", "spectator", "guinea ping",
-     "He/Him", "She/Her", "They/Them",  "No Pronoun", "IronGoler",
-     "co-op flag tester"]
+    [
+     "duckling",
+     "platypus",
+     "race crew",
+     "restreamer",
+     "Ping Me To Race",
+     "spectator",
+     "guinea ping",
+     "He/Him",
+     "She/Her",
+     "They/Them",
+     "No Pronoun"
+     "IronGoler",
+     "co-op flag tester",
+     "APPingMeToPlay"
+    ]
 self_assignable_roles_descriptions =\
     ["Optional new player role. Allows you to"
      + " participate in the weekly duckling "
@@ -68,14 +81,17 @@ self_assignable_roles_descriptions =\
      + " assuming.",
      "An optional role"
      + " to let commentary people know to not"
-     + " use pronous for you.",
+     + " use pronouns for you.",
      "Grab this tag if you want to keep up"
      + "with all the IronGol events or if"
      + "you plan on participating in any"
      + "IronGol Matches.",
      "An optional role to signify that you"
      + "want to receive pings to test flags"
-     + " for co-op races"]
+     + " for co-op races",
+     "An optional role"
+     + " for people to ping if they want to"
+     + " play multiworld using Archipelago"]
 
 role_requests = "role-requests"
 polls_category = "Administration"

@@ -7,6 +7,7 @@ import urllib.request
 import json
 from io import StringIO
 
+from discord import DiscordException
 from discord.ext import commands
 from discord.utils import get
 
@@ -22,13 +23,15 @@ allow_races_bool = True
 
 
 def allow_seed_rolling(ctx):
-    return (ctx.channel.name == constants.call_for_races_channel) or (
+    return (ctx.channel.name in constants.call_for_races_channels) or (
         ctx.channel.id in active_races.keys())
 
 
 def is_call_for_races(ctx):
-    return ctx.channel.name == constants.call_for_races_channel
+    return ctx.channel.name in constants.call_for_races_channels
 
+def is_call_for_multiworld(ctx):
+    return ctx.channel.name in constants.call_for_races_channels
 
 def is_race_room(ctx):
     return ctx.channel.id in active_races.keys()
@@ -129,6 +132,39 @@ class Races(commands.Cog):
         teamslist[racechannel.id] = dict()
         race.owner = ctx.author.id
 
+    # Note: This will likely change to accommodate multiworld specific needs
+    @commands.command(aliases=['ap', 'multiworld', 'archipelago'])
+    @commands.check(is_call_for_multiworld)
+    @commands.check(allow_races)
+    async def startmultiworld(self, ctx, *, name=None):
+        if name is None:
+            await ctx.author.send("you forgot to name your multiworld")
+            return
+
+        racechannel = await ctx.guild \
+            .create_text_channel(name,
+                                 category=get(ctx.guild.categories,
+                                              name=constants.multiworld_category),
+                                 reason="bot generated channel for a multiworld,"
+                                        + " will be deleted after multiworld "
+                                          "finishes")
+        race = Race(racechannel.id, name)
+        active_races[racechannel.id] = race
+        race.role = await ctx.guild.create_role(name=race.id,
+                                                reason="role for a multiworld")
+        race.channel = racechannel
+        await racechannel.set_permissions(race.role, read_messages=True,
+                                          send_messages=True)
+        race.message = await ctx.channel.send(
+            "join this race with the following ?join command, @ any"
+            + " people that will be on your team if playing coop. "
+            + "Spectate the race with the following ?spectate command\n"
+            + "?join " + str(racechannel.id) + "\n"
+            + "?spectate " + str(racechannel.id))
+        aliases[racechannel.id] = dict()  # for team races
+        teamslist[racechannel.id] = dict()
+        race.owner = ctx.author.id
+
     @commands.command(aliases=['cr'])
     @is_race_started(toggle=False)
     @commands.check(is_race_owner)
@@ -140,7 +176,12 @@ class Races(commands.Cog):
     @commands.command(aliases=["enter"])
     @commands.check(allow_seed_rolling)
     async def join(self, ctx, id=None, name=None):
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except DiscordException:
+            # Fails on newer discord tokens
+            pass
+
         if id is None:
             id = ctx.channel.id
         id = int(id)
