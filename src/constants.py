@@ -34,6 +34,7 @@ self_assignable_roles =\
      "He/Him",
      "She/Her",
      "They/Them",
+     "Ze/Hir",
      "No Pronoun",
      "IronGoler",
      "co-op flag tester",
@@ -77,6 +78,11 @@ self_assignable_roles_descriptions =\
      "An optional role"
      + " to let commentary people know to use"
      + " they/them instead of female or male"
+     + " pronouns for you rather than just"
+     + " assuming.",
+     "An optional role"
+     + " to let commentary people know to use"
+     + " ze/hir instead of other"
      + " pronouns for you rather than just"
      + " assuming.",
      "An optional role"
