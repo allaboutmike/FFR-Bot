@@ -131,6 +131,11 @@ class Races(commands.Cog):
         aliases[racechannel.id] = dict()  # for team races
         teamslist[racechannel.id] = dict()
         race.owner = ctx.author.id
+        # just trying to hack around the permission bug we've been dealing
+        # with throughout 2023. cause unknown but maybe this helps?
+        await asyncio.sleep(5)
+        await racechannel.set_permissions(race.role, read_messages=True,
+                                          send_messages=True)
 
     @commands.command(aliases=['ap', 'multiworld', 'archipelago'])
     @commands.check(is_call_for_multiworld)
