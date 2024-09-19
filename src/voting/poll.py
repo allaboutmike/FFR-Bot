@@ -21,12 +21,14 @@ class Poll:
         return r_val
 
     def __eq__(self, other):
-        return (self.options == other.options
-                and self.poll_id == other.poll_id
-                and self.voters == other.voters
-                and self.started == other.started
-                and self.ended == other.ended
-                and self.channel_id == other.channel_id)
+        return (
+            self.options == other.options
+            and self.poll_id == other.poll_id
+            and self.voters == other.voters
+            and self.started == other.started
+            and self.ended == other.ended
+            and self.channel_id == other.channel_id
+        )
 
     def get_channel(self):
         return self.channel_id
@@ -37,13 +39,15 @@ class Poll:
     def add_option(self, ctx: any, args: list):
         id = args[0]
         description = args[1]
-        if (id in self.options):
+        if id in self.options:
             raise KeyError("That id already exists")
         else:
-            self.options[id] = {"id": id,
-                                "description": description,
-                                "voters": [],
-                                "index": len(self.options)}
+            self.options[id] = {
+                "id": id,
+                "description": description,
+                "voters": [],
+                "index": len(self.options),
+            }
 
     def list_options(self, name_only=False):
         r_val = ""
@@ -51,9 +55,11 @@ class Poll:
         for option in self.options.values():
             count += 1
             r_val += str(count) + ": "
-            r_val += option["id"]\
-                + ("" if name_only else " - " + option[
-                    "description"]) + "\n\n"
+            r_val += (
+                option["id"]
+                + ("" if name_only else " - " + option["description"])
+                + "\n\n"
+            )
         return r_val
 
     def start_poll(self):
@@ -98,8 +104,7 @@ class Poll:
             voter = FFRVoter(voter_id, voter_name)
             try:
                 self.voters[str(voter_id)] = voter
-                option_id = self.get_option_id_by_index(
-                    int(args[0].strip("<>")) - 1)
+                option_id = self.get_option_id_by_index(int(args[0].strip("<>")) - 1)
                 voter.set_vote(option_id)
                 self.options[option_id]["voters"].append(voter)
             except KeyError:
@@ -120,12 +125,13 @@ class Poll:
             raise KeyError("That id doesn't exist")
 
     def get_winner(self):
-        sorted_options = [value for value in
-                          sorted(self.options.values(),
-                                 key=lambda val: len(val["voters"]),
-                                 reverse=True)]
-        if (len(sorted_options[0]["voters"]) !=
-                len(sorted_options[1]["voters"])):
+        sorted_options = [
+            value
+            for value in sorted(
+                self.options.values(), key=lambda val: len(val["voters"]), reverse=True
+            )
+        ]
+        if len(sorted_options[0]["voters"]) != len(sorted_options[1]["voters"]):
             return sorted_options[0]
         else:
             return False
@@ -136,21 +142,28 @@ class Poll:
             r_val = "Its a Tie!\n"
         else:
             r_val = "The winner is: " + self.get_winner()["id"] + "\n"
-        for value in sorted(self.options.values(),
-                            key=lambda val: len(val["voters"]),
-                            reverse=True):
-            r_val += "\n" + value["id"] + ": "\
-                     + str(
-                round(100 * len(value["voters"]) / len(self.voters)))\
-                + "%   " + str(len(value["voters"])) + " votes"
+        for value in sorted(
+            self.options.values(), key=lambda val: len(val["voters"]), reverse=True
+        ):
+            r_val += (
+                "\n"
+                + value["id"]
+                + ": "
+                + str(round(100 * len(value["voters"]) / len(self.voters)))
+                + "%   "
+                + str(len(value["voters"]))
+                + " votes"
+            )
 
         r_val += "\n\nTotal votes: " + str(len(self.voters))
         return r_val
 
     def get_vote_text(self):
-        return ("To vote in this poll, find the option number you want, then "
-                + "copy and paste the following, with the <x> replaced with"
-                + " that number:")
+        return (
+            "To vote in this poll, find the option number you want, then "
+            + "copy and paste the following, with the <x> replaced with"
+            + " that number:"
+        )
 
     def get_submitballot_template(self):
         r_val = "\n`?submitballot " + str(self.channel_id) + " <x>`\n\n"
@@ -169,8 +182,7 @@ class Poll:
         logging.debug(self.options.values())
         logging.debug(len(self.options.values()))
         try:
-            id = [k for k, v in self.options.items()
-                  if v["index"] == index][0]
+            id = [k for k, v in self.options.items() if v["index"] == index][0]
         except IndexError:
             id = None
 
@@ -208,6 +220,7 @@ class AlreadyVoted(Exception):
     """
     raised when that user has already voted
     """
+
     pass
 
 
@@ -215,6 +228,7 @@ class VoteNotOpen(Exception):
     """
     raised when this vote is not yet open
     """
+
     pass
 
 
@@ -222,4 +236,5 @@ class VoteAlreadyClosed(Exception):
     """
     raised when this vote is already closed
     """
+
     pass

@@ -30,10 +30,12 @@ class StvElection(Poll):
     def list_options(self, name_only=False):
         r_val = ""
         for option in self.options.values():
-            r_val += (str(option["mention"])
-                      + "\n  display name: "
-                      + str(option["display_name"])
-                      + "\n\n")
+            r_val += (
+                str(option["mention"])
+                + "\n  display name: "
+                + str(option["display_name"])
+                + "\n\n"
+            )
         return r_val
 
     def add_option(self, ctx: any, args: list):
@@ -42,30 +44,32 @@ class StvElection(Poll):
         id = str(user.id)
         mention = user.mention
         display_name = user.display_name
-        if (id in self.options):
+        if id in self.options:
             raise KeyError("That id already exists")
         else:
-            self.options[id] = {"id": id,
-                                "mention": mention,
-                                "display_name": display_name,
-                                "index": len(self.options)}
+            self.options[id] = {
+                "id": id,
+                "mention": mention,
+                "display_name": display_name,
+                "index": len(self.options),
+            }
 
     def get_vote_text(self):
         r_val = "\n\n\nCandidates:\n"
         r_val += self.list_options()
-        r_val += ("\n\n\nTo vote in this poll, rank the avalible options"
-                  + " starting at 1, copy and paste the following, and "
-                  + "replace the <x>s with your ranking:")
+        r_val += (
+            "\n\n\nTo vote in this poll, rank the avalible options"
+            + " starting at 1, copy and paste the following, and "
+            + "replace the <x>s with your ranking:"
+        )
         return r_val
 
     def get_submitballot_template(self):
         r_val = "\n\n?submitballot " + self.channel_id
         for option in self.options.values():
-            r_val += ("\n\"<x>, "
-                      + option["display_name"]
-                      + ", "
-                      + str(option["id"])
-                      + "\"")
+            r_val += (
+                '\n"<x>, ' + option["display_name"] + ", " + str(option["id"]) + '"'
+            )
 
         return r_val
 
@@ -82,9 +86,9 @@ class StvElection(Poll):
                     continue
                 rank = int(rank)
                 id_exists = id in self.options.keys()
-                rank_valid = (rank > 0
-                              and rank <= len(self.options)
-                              and rank not in ranks)
+                rank_valid = (
+                    rank > 0 and rank <= len(self.options) and rank not in ranks
+                )
                 if not (id_exists and rank_valid):
                     return False
                 ranks.append(rank)
@@ -115,15 +119,16 @@ class StvElection(Poll):
         ballot = self.process_ballot(ballot_args)
         logging.info(str(ballot_args) + "\n" + str(ballot))
 
-        for key, value in sorted(ballot.items(), key=lambda rank:
-                                 int(rank[0])):
+        for key, value in sorted(ballot.items(), key=lambda rank: int(rank[0])):
             option = self.options[value]
-            ballot_text += (str(key)
-                            + " | "
-                            + str(option["mention"])
-                            + " | "
-                            + option["display_name"]
-                            + "\n")
+            ballot_text += (
+                str(key)
+                + " | "
+                + str(option["mention"])
+                + " | "
+                + option["display_name"]
+                + "\n"
+            )
 
         return ballot_text
 
@@ -185,26 +190,31 @@ class StvElection(Poll):
         round_num = 1
         count = None
 
-        while (len(winners) < self.seat_count
-               and len(winners) + len(remaining_options) != self.seat_count
-               and len(tied) == 0):
+        while (
+            len(winners) < self.seat_count
+            and len(winners) + len(remaining_options) != self.seat_count
+            and len(tied) == 0
+        ):
 
-            count = self.update_count(count,
-                                      round_num,
-                                      votes,
-                                      options,
-                                      winners,
-                                      remaining_options,
-                                      quota)
+            count = self.update_count(
+                count, round_num, votes, options, winners, remaining_options, quota
+            )
 
             try:
-                max_count = max([v["total"] for k, v in count[str(
-                    round_num)].items() if k in remaining_options])
+                max_count = max(
+                    [
+                        v["total"]
+                        for k, v in count[str(round_num)].items()
+                        if k in remaining_options
+                    ]
+                )
             except ValueError:
-                logging.info("no remaining options, options: "
-                             + str(remaining_options)
-                             + "\nwinners: "
-                             + str(winners))
+                logging.info(
+                    "no remaining options, options: "
+                    + str(remaining_options)
+                    + "\nwinners: "
+                    + str(winners)
+                )
                 return {"winners": winners, "tied": tied}
 
             logging.info("Max count: " + str(max_count))
@@ -220,47 +230,48 @@ class StvElection(Poll):
                 remaining_options -= winners
 
             else:
-                min_count = min([v["total"] for k, v in count[str(
-                    round_num)].items() if k in remaining_options])
+                min_count = min(
+                    [
+                        v["total"]
+                        for k, v in count[str(round_num)].items()
+                        if k in remaining_options
+                    ]
+                )
                 logging.info("Min count: " + str(min_count))
-                options_to_remove = set([option for option
-                                         in options if option
-                                         in remaining_options
-                                         and count[str(round_num)]
-                                         [option]["total"]
-                                         == min_count])
+                options_to_remove = set(
+                    [
+                        option
+                        for option in options
+                        if option in remaining_options
+                        and count[str(round_num)][option]["total"] == min_count
+                    ]
+                )
                 logging.info("options to remove" + str(options_to_remove))
 
-                if (len(
-                        remaining_options -
-                        options_to_remove)
-                        + len(winners)) < self.seat_count:
+                if (
+                    len(remaining_options - options_to_remove) + len(winners)
+                ) < self.seat_count:
                     tied = options_to_remove
                 else:
                     remaining_options -= options_to_remove
 
             round_num += 1
 
-        if (len(winners) < self.seat_count
-                and len(tied) == 0):
+        if len(winners) < self.seat_count and len(tied) == 0:
             if len(winners) + len(remaining_options) == self.seat_count:
                 winners |= remaining_options
             else:
-                logging.warning("no tied, but winners + remaining"
-                                + " is not equal to the seat count!!")
+                logging.warning(
+                    "no tied, but winners + remaining"
+                    + " is not equal to the seat count!!"
+                )
         logging.info("Winners: " + str(winners))
         logging.info("Tied: " + str(tied))
         return {"winners": winners, "tied": tied}
 
     def update_count(
-            self,
-            count,
-            round_num,
-            votes,
-            options,
-            winners,
-            remaining_options,
-            quota):
+        self, count, round_num, votes, options, winners, remaining_options, quota
+    ):
 
         if count is None:
             count = {str(round_num): dict()}
@@ -284,50 +295,62 @@ class StvElection(Poll):
                     removed_options.append(option_key)
 
             for removed_option_key in removed_options:
-                logging.info("removed option key is: "
-                             + str(removed_option_key))
+                logging.info("removed option key is: " + str(removed_option_key))
                 option = self.options[removed_option_key]
-                for vote in\
-                        count[str(round_num - 1)][removed_option_key]["votes"]:
+                for vote in count[str(round_num - 1)][removed_option_key]["votes"]:
                     logging.info("new voter")
-                    for k, v in sorted(
-                            vote.items(), key=lambda x: self.vote_sort(x)):
+                    for k, v in sorted(vote.items(), key=lambda x: self.vote_sort(x)):
                         if k == "weight":
                             continue
-                        logging.info("vote info stuff: " + str(k) + " "
-                                     + str(v))
-                        logging.info("remaining options: "
-                                     + str(remaining_options))
-                        logging.info(str(v)
-                                     + " in remaining options: "
-                                     + str(v in remaining_options))
+                        logging.info("vote info stuff: " + str(k) + " " + str(v))
+                        logging.info("remaining options: " + str(remaining_options))
+                        logging.info(
+                            str(v)
+                            + " in remaining options: "
+                            + str(v in remaining_options)
+                        )
                         if v in remaining_options:
-                            logging.info("found next ranked option still"
-                                         + " in the running: " + str(v))
+                            logging.info(
+                                "found next ranked option still"
+                                + " in the running: "
+                                + str(v)
+                            )
                             if removed_option_key in winners:
                                 logging.info(
                                     "voter's earlier option won: "
-                                    + str(removed_option_key))
-                                total = count[str(round_num - 1)
-                                              ][removed_option_key]["total"]
+                                    + str(removed_option_key)
+                                )
+                                total = count[str(round_num - 1)][removed_option_key][
+                                    "total"
+                                ]
                                 surplus = total - quota
                                 old_weight = str(vote["weight"])
                                 vote["weight"] *= surplus / total
                                 weight = str(vote["weight"])
-                                logging.info("\ntotal votes for previous "
-                                             + "option: " + str(total) + "\n"
-                                             + "quota: " + str(quota) + "\n"
-                                             + "surplus: " + str(surplus)
-                                             + "\nold weight: " + old_weight
-                                             + "\nnew weight: " + weight)
+                                logging.info(
+                                    "\ntotal votes for previous "
+                                    + "option: "
+                                    + str(total)
+                                    + "\n"
+                                    + "quota: "
+                                    + str(quota)
+                                    + "\n"
+                                    + "surplus: "
+                                    + str(surplus)
+                                    + "\nold weight: "
+                                    + old_weight
+                                    + "\nnew weight: "
+                                    + weight
+                                )
                                 if vote["weight"] == 0:
-                                    logging.info("vote weight is zero,"
-                                                 + " skipping")
+                                    logging.info("vote weight is zero," + " skipping")
                                     break
-                            logging.info("transering vote of weight: "
-                                         + str(vote["weight"])
-                                         + " to: "
-                                         + str(v))
+                            logging.info(
+                                "transering vote of weight: "
+                                + str(vote["weight"])
+                                + " to: "
+                                + str(v)
+                            )
                             count[str(round_num)][v]["votes"].append(vote)
                             break
 
@@ -362,12 +385,14 @@ class StvElection(Poll):
         votes = [voter.get_vote() for voter in self.voters.values()]
         for i in range(len(votes)):
             for k in votes[i].keys():
-                votes[i][k] += (" - "
-                                + self.options[votes[i][k]]["display_name"]
-                                + " - "
-                                + self.options[votes[i][k]]["mention"])
+                votes[i][k] += (
+                    " - "
+                    + self.options[votes[i][k]]["display_name"]
+                    + " - "
+                    + self.options[votes[i][k]]["mention"]
+                )
         name = "votes.csv"
-        with open(name, 'w') as csvFile:
+        with open(name, "w") as csvFile:
             fields = [str(x) for x in range(1, len(self.options) + 1)]
             writer = csv.DictWriter(csvFile, fieldnames=fields)
             writer.writeheader()
@@ -380,19 +405,20 @@ class StvElection(Poll):
         for voter in self.voters.values():
             vote = voter.get_vote()
             for k in vote.keys():
-                vote[k] += (" - "
-                            + self.options[vote[k]]["display_name"]
-                            + " - "
-                            + self.options[vote[k]]["mention"])
+                vote[k] += (
+                    " - "
+                    + self.options[vote[k]]["display_name"]
+                    + " - "
+                    + self.options[vote[k]]["mention"]
+                )
             vote["voter name"] = voter.name
             vote["voter id"] = voter.id
             votes.append(vote)
 
         name = "voter_info.csv"
-        with open(name, 'w') as csvFile:
+        with open(name, "w") as csvFile:
             fields = ["voter name", "voter id"]
-            fields.extend(
-                [str(x) for x in range(1, len(self.options) + 1)])
+            fields.extend([str(x) for x in range(1, len(self.options) + 1)])
             logging.info(fields)
             writer = csv.DictWriter(csvFile, fieldnames=fields)
             writer.writeheader()
