@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import re
-import time
 from datetime import datetime, timedelta
 from math import ceil
 from random import random
@@ -161,7 +160,7 @@ async def submit(ctx, runnertime: str = None):
         forfeits = int(leaderboard_list[-1].split("-")[-1])
 
         # trim the leaderboard to remove the title and forfeit message
-        leaderboard_list = leaderboard_list[2 : len(leaderboard_list) - 2]
+        leaderboard_list = leaderboard_list[2:len(leaderboard_list) - 2]
 
         for i in range(len(leaderboard_list)):
             leaderboard_list[i] = re.split("[)-]", leaderboard_list[i])[1:]
@@ -245,7 +244,7 @@ async def remove(ctx):
         forfeits = int(leaderboard_list[-1].split("-")[-1])
 
         # trim the leaderboard to remove the title and forfeit message
-        leaderboard_list = leaderboard_list[2 : len(leaderboard_list) - 2]
+        leaderboard_list = leaderboard_list[2:len(leaderboard_list) - 2]
 
         for i in range(len(leaderboard_list)):
             leaderboard_list[i] = re.split("[)-]", leaderboard_list[i])[1:]
@@ -260,7 +259,7 @@ async def remove(ctx):
             i = 0
             for i in range(len(leaderboard_list)):
                 if leaderboard_list[i][0][
-                    1 : len(leaderboard_list[i][0]) - 1
+                    1:len(leaderboard_list[i][0]) - 1
                 ] == re.sub("[()-]", "", player.display_name):
                     del leaderboard_list[i]
                     await player.remove_roles(remove_role)

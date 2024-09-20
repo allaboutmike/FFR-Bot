@@ -1,5 +1,4 @@
 import asyncio
-import re
 import random
 
 from urllib.parse import parse_qs, urlparse
