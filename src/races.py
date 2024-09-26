@@ -142,7 +142,7 @@ class Races(commands.Cog):
         active_races[racethread.id] = race
         race.channel = racethread
 
-        race.message = await ctx.channel.send(
+        race.message = await racethread.send(
             "join this multiworld with the ?join command, @ any"
             + " people that will be on your team if playing coop. "
         )
