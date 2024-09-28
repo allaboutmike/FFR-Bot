@@ -1,5 +1,4 @@
 import asyncio
-import re
 import random
 
 from urllib.parse import parse_qs, urlparse
@@ -30,8 +29,10 @@ def allow_seed_rolling(ctx):
 def is_call_for_races(ctx):
     return ctx.channel.name in constants.call_for_races_channels
 
+
 def is_call_for_multiworld(ctx):
     return ctx.channel.name in constants.call_for_races_channels
+
 
 def is_race_room(ctx):
     return ctx.channel.id in active_races.keys()
@@ -103,39 +104,25 @@ class Races(commands.Cog):
         if name is None:
             await ctx.author.send("you forgot to name your race")
             return
-        # overwrites = {
-        #     ctx.guild.default_role: discord.PermissionOverwrite(
-        #         read_messages=False), ctx.guild.me: discord
-        #     .PermissionOverwrite(
-        #         read_messages=True)}
-        racechannel = await ctx.guild\
-            .create_text_channel(name,
-                                 category=get(ctx.guild.categories,
-                                              name=constants.races_category),
-                                 reason="bot generated channel for a race,"
-                                        + " will be deleted after race "
-                                          "finishes")
-        race = Race(racechannel.id, name)
-        active_races[racechannel.id] = race
-        race.role = await ctx.guild.create_role(name=race.id,
-                                                reason="role for a race")
-        race.channel = racechannel
-        await racechannel.set_permissions(race.role, read_messages=True,
-                                          send_messages=True)
-        race.message = await ctx.channel.send(
-            "join this race with the following ?join command, @ any"
-            + " people that will be on your team if playing coop. "
-            + "Spectate the race with the following ?spectate command\n"
-            + "?join " + str(racechannel.id) + "\n"
-            + "?spectate " + str(racechannel.id))
-        aliases[racechannel.id] = dict()  # for team races
-        teamslist[racechannel.id] = dict()
+        message_str = "A new race has been started!\nJoin this race with the" \
+            + " ?join command, @ any people that will be on your team if playing coop."
+
+        racethread = await ctx.channel.create_thread(
+            name=name,
+            message=ctx.message,
+            reason="bot generated thread for a race"
+        )
+        race = Race(racethread.id, name)
+        active_races[racethread.id] = race
+        race.channel = racethread
+        race.message = await racethread.send(message_str)
+        aliases[racethread.id] = dict()  # for team races
+        teamslist[racethread.id] = dict()
         race.owner = ctx.author.id
         # just trying to hack around the permission bug we've been dealing
         # with throughout 2023. cause unknown but maybe this helps?
+        await race.message.pin()
         await asyncio.sleep(5)
-        await racechannel.set_permissions(race.role, read_messages=True,
-                                          send_messages=True)
 
     @commands.command(aliases=['ap', 'multiworld', 'archipelago'])
     @commands.check(is_call_for_multiworld)
@@ -145,28 +132,22 @@ class Races(commands.Cog):
             await ctx.author.send("you forgot to name your multiworld")
             return
 
-        racechannel = await ctx.guild \
-            .create_text_channel(name,
-                                 category=get(ctx.guild.categories,
-                                              name=constants.multiworld_category),
-                                 reason="bot generated channel for a multiworld,"
-                                        + " will be deleted after multiworld "
-                                          "finishes")
-        race = Race(racechannel.id, name, lockable=True)
-        active_races[racechannel.id] = race
-        race.role = await ctx.guild.create_role(name=race.id,
-                                                reason="role for a multiworld")
-        race.channel = racechannel
-        await racechannel.set_permissions(race.role, read_messages=True,
-                                          send_messages=True)
-        race.message = await ctx.channel.send(
-            "join this multiworld with the following ?join command, @ any"
+        racethread = await ctx.channel.create_thread(
+            name=name,
+            message=ctx.message,
+            reason="bot generated thread for a multiworld,"
+        )
+
+        race = Race(racethread.id, name, lockable=True)
+        active_races[racethread.id] = race
+        race.channel = racethread
+
+        race.message = await racethread.send(
+            "join this multiworld with the ?join command, @ any"
             + " people that will be on your team if playing coop. "
-            + "Spectate the race with the following ?spectate command\n"
-            + "?join " + str(racechannel.id) + "\n"
-            + "?spectate " + str(racechannel.id))
-        aliases[racechannel.id] = dict()  # for team races
-        teamslist[racechannel.id] = dict()
+        )
+        aliases[racethread.id] = dict()  # for team races
+        teamslist[racethread.id] = dict()
         race.owner = ctx.author.id
 
     @commands.command(aliases=['cr'])
@@ -185,10 +166,9 @@ class Races(commands.Cog):
         try:
             race = active_races[ctx.channel.id]
             race.lockRace()
-            edited_message = "Race: " + race.name \
-                             + " is now locked! Join the race room with the " \
-                               "following command!" \
-                             + "\n?spectate " + str(race.id)
+            edited_message = (
+                "Race: " + race.name + " is now locked! "
+            )
             await race.message.edit(content=edited_message)
             await ctx.channel.send('Race is now locked. New players cannot be added.')
         except RaceNotLockable:
@@ -202,18 +182,16 @@ class Races(commands.Cog):
         race = active_races[ctx.channel.id]
         if (race.islocked):
             race.unlockRace()
-            edited_message = "join this multiworld/race with the following ?join command, @ any" \
-                + " people that will be on your team if playing coop. " \
-                + "Spectate the multiworld/race with the following ?spectate command\n" \
-                + "?join " + str(ctx.channel.id) + "\n" \
-                + "?spectate " + str(ctx.channel.id)
+            edited_message = (
+                "join this multiworld/race with the ?join command, @ any"
+                + " people that will be on your team if playing coop. "
+            )
             await race.message.edit(content=edited_message)
             await ctx.channel.send('This race is now unlocked. New players can join again.')
         else:
             await ctx.channel.send('Race is already unlocked.')
 
     @commands.command(aliases=["enter"])
-    @commands.check(allow_seed_rolling)
     async def join(self, ctx, id=None, name=None):
         try:
             await ctx.message.delete()
@@ -221,15 +199,21 @@ class Races(commands.Cog):
             # Fails on newer discord tokens
             pass
 
+        if ctx.channel.id not in active_races.keys():
+            await ctx.author.send(
+                "Join command must be used in an active race channel or thread"
+            )
+            return
+
         if id is None:
             id = ctx.channel.id
         id = int(id)
         try:
             if active_races[id].started is True:
-                await ctx.channel.send("That race has already started")
+                await ctx.channel.send("This race has already started")
                 return
             if active_races[id].islocked is True:
-                await ctx.channel.send("That race is locked. No new racers can join.")
+                await ctx.channel.send("This race is locked. No new racers can join.")
                 return
         except KeyError:
             await ctx.author.send("That id doesnt exist")
@@ -239,7 +223,6 @@ class Races(commands.Cog):
             name = ctx.author.display_name
 
         race = active_races[id]
-        await ctx.author.add_roles(race.role)
         race.addRunner(ctx.author.id, name)
         aliases[id][ctx.author.id] = ctx.author.id
         teamslist[id][ctx.author.id] = dict(
@@ -248,9 +231,7 @@ class Races(commands.Cog):
         tagpeople = "Welcome! " + ctx.author.mention
         for r in ctx.message.mentions:
             aliases[id][r.id] = ctx.author.id
-            teamslist[id][ctx.author.id]["members"].append(
-                [r.display_name, r.id])
-            await r.add_roles(race.role)
+            teamslist[id][ctx.author.id]["members"].append([r.display_name, r.id])
             tagpeople += r.mention + " "
         await race.channel.send(tagpeople)
 
@@ -296,7 +277,6 @@ class Races(commands.Cog):
         except KeyError:
             return
         await ctx.message.delete()
-        await ctx.author.add_roles(race.role)
         if id:
             await race.channel.send("%s is now cheering you on from the"
                                     + " sidelines" % ctx.author.mention)
@@ -450,23 +430,18 @@ class Races(commands.Cog):
     async def endrace(self, ctx, msg):
         rresults = get(ctx.message.guild.channels, name=constants.race_results)
         await rresults.send(msg + "\n===================================")
-        await ctx.channel.send("deleting this channel in 5 minutes")
-        await asyncio.sleep(300)
-        await self.removeraceroom(ctx)
+        await self.removerace(ctx)
 
     async def startcountdown(self, ctx):
         race = active_races[ctx.channel.id]
         multi = await self.multistream(race, all=True, discord=True, ctx=ctx)
         if (race.readycount != len(race.runners)):
             return
-        edited_message = "Race: " + race.name\
-                         + " has started! Join the race room with the "\
-                           "following command!"\
-                         + "\n?spectate " + str(
-                             race.id) + "\nWatch the race at: "\
-            + (
-                             race.restream if race.restream is not None else
-                             multi)
+        edited_message = (
+            "Race: " + race.name + " has started! "
+            + "\nWatch the race at: "
+            + (race.restream if race.restream is not None else multi)
+        )
         await race.message.edit(content=edited_message)
         for i in range(10):
             await ctx.channel.send(str(10 - i))
@@ -485,30 +460,23 @@ class Races(commands.Cog):
             return
         race.restream = streamid
         await ctx.channel.send("restream set to: " + race.restream)
-        edited_message = ("join this race with the following ?join command,"
-                          + " @ any people that will be on your team if "
-                          + "playing coop. Spectate the race with the "
-                          + "following ?spectate"
-                          + " command\n?join "
-                          + str(race.id)
-                          + "\n?spectate "
-                          + str(race.id)
-                          + "\nWatch the race at: "
-                          + race.restream)
+        edited_message = (
+            "join this race with the ?join command,"
+            + " @ any people that will be on your team if "
+            + "playing coop. "
+            + "\nWatch the race at: "
+            + race.restream
+        )
 
         await race.message.edit(content=edited_message)
 
-    async def removeraceroom(self, ctx, time=0):
+    async def removerace(self, ctx, time=0):
         await asyncio.sleep(time)
         race = active_races[ctx.channel.id]
-        role = race.role
         channel = race.channel
         del active_races[ctx.channel.id]
         del aliases[channel.id]
         del teamslist[channel.id]
-        await channel\
-            .delete(reason="bot deleted channel because the race ended")
-        await role.delete(reason="bot deleted role because the race ended")
 
     @commands.command(
         aliases=["ff1url", "ff1roll", "ffrroll", "rollseedurl", "roll_ffr_url_seed"]
