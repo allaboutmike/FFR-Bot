@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:8
+      - image: cimg/node:22.9
     steps:
       - checkout
       - setup_remote_docker
@@ -15,7 +15,7 @@ jobs:
             docker push fiendsoftheelements/ffr-bot:latest
   deploy:
     docker:
-      - image: circleci/node:8
+      - image: cimg/node:22.9
     steps:
       - checkout
       - run:
