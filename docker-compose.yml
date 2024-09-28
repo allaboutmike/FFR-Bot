@@ -1,0 +1,13 @@
+services:
+  bot:
+    image: fiendsoftheelements/ffr-bot:latest
+    environment:
+      REDIS_HOST: redis
+    links:
+      - redis
+    restart: always
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - ./data:/data
+    restart: always
