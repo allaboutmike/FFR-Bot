@@ -1,8 +1,6 @@
 import asyncio
-import random
 import logging
 
-from urllib.parse import parse_qs, urlparse
 import urllib.request
 import json
 from io import StringIO
@@ -11,19 +9,13 @@ from discord import DiscordException
 from discord.ext import commands
 from discord.utils import get
 
-from ffrrace import Race, RaceNotLockable
+from races.ffrrace import Race, RaceNotLockable
 import constants
 
 active_races = dict()
 aliases = dict()
 teamslist = dict()
 allow_races_bool = True
-
-
-def allow_seed_rolling(ctx):
-    return (ctx.channel.name in constants.call_for_races_channels) or (
-        ctx.channel.id in active_races.keys()
-    )
 
 
 def is_call_for_races(ctx):
@@ -278,7 +270,6 @@ class Races(commands.Cog):
             pass
         await self.startcountdown(ctx)
 
-    @commands.command(aliases=["s"])
     @commands.check(is_call_for_races)
     async def spectate(self, ctx, id):
         try:
@@ -366,7 +357,6 @@ class Races(commands.Cog):
         except KeyError:
             await ctx.channel.send("Key Error in 'undone' command")
 
-    @commands.command()
     @is_race_started()
     @is_runner()
     @commands.check(is_race_room)
@@ -500,41 +490,6 @@ class Races(commands.Cog):
     async def lockracethread(self, ctx):
         await ctx.channel.edit(locked=True, archived=True)
         await self.removerace(ctx)
-
-    @commands.command(
-        aliases=["ff1url", "ff1roll", "ffrroll", "rollseedurl", "roll_ffr_url_seed"]
-    )
-    @commands.check(allow_seed_rolling)
-    async def ffrurl(self, ctx, url):
-        user = ctx.author
-        if url is None:
-            await user.send("You need to supply the url to roll a seed for.")
-            return
-
-        parsed = urlparse(url)
-        flags = parse_qs(parsed.query)["f"][0]
-
-        msg = await ctx.channel.send(
-            self.flagseedgen(
-                flags,
-                parsed.hostname,
-            )
-        )
-        await msg.pin()
-
-    def flagseedgen(self, flags, site):
-        seed = random.randint(0, 4294967295)
-        url = "<https://" + site
-
-        url += "/Randomize?s=" + ("{0:-0{1}x}".format(seed, 8)) + "&f=" + flags
-
-        url += ">"
-        return url
-
-    @commands.command()
-    @commands.check(allow_seed_rolling)
-    async def ff1seed(self, ctx):
-        await ctx.channel.send("{0:-0{1}x}".format(random.randint(0, 4294967295), 8))
 
     @commands.command()
     async def multireadied(self, ctx, raceid: str = None):
